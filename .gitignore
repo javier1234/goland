@@ -16,4 +16,4 @@
 #intellij
 *.iml
 .idea/
-.idea/*.*
+.idea/vcs.xml
