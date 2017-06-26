@@ -85,11 +85,13 @@ func main() {
 	}
 
 
-	var max = 0
+	var max int
 	for  y := 0;y < 4;y++ {
 		for  x := 0;x < 4;x++ {
 			var sum = xy[y][x]+ xy[y][x+1]+ xy[y][x+2]+ xy[y+1][x+1]+ xy[y+2][x]+ xy[y+2][x+1]+ xy[y+2][x+2]
-			if sum > max {
+			if (x==0 && y == 0) {
+				max = sum
+			} else if sum > max {
 				max = sum
 			}
 		}
