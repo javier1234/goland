@@ -72,32 +72,28 @@ The hourglass with the maximum sum () is:
  */
 func main() {
 	var xy = [6][6]int{}
-	var p = [6][6]interface{}{}
+	var p = make([][]interface{}, 6)
 
 	for  y := 0;y < 6;y++ {
+		p[y] = make([]interface{}, 6)
 		for x := 0;x < 6;x++ {
 			p[y][x] = &xy[y][x]
 		}
 	}
 	for  y := 0;y < 6;y++ {
-		fmt.Scanf("%v %v %v %v %v %v\n",p[y][0], p[y][1], p[y][2], p[y][3], p[y][4], p[y][5])
+		fmt.Scanln(p[y]...)
 	}
+
+
 	var max = 0
 	for  y := 0;y < 4;y++ {
 		for  x := 0;x < 4;x++ {
-			fmt.Printf("%d %d\n", y, x)
-			var xxyy = xy[y:][x:]
-			var sum = calcSumHourglasses(xxyy)
-			fmt.Printf("sum :%v\n", sum)
+			var sum = xy[y][x]+ xy[y][x+1]+ xy[y][x+2]+ xy[y+1][x+1]+ xy[y+2][x]+ xy[y+2][x+1]+ xy[y+2][x+2]
 			if sum > max {
 				max = sum
 			}
 		}
 	}
-
+	fmt.Println(max)
 }
 
-func calcSumHourglasses(xy [][6]int) int {
-	fmt.Printf("estoy aca\n")
-	return xy[0][0]+xy[0][1]+xy[0][2]+xy[1][1]+xy[2][0]+xy[2][1]+xy[2][2]
-}
