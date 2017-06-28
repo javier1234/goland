@@ -90,11 +90,12 @@ func main() {
 
 	var seq = make([][]int64, N)
 	for n:=0; int64(n)<N;n++{
-		seq[n] = make([]int64, Q)
+		seq[n] = []int64{}
 	}
 	var lastAnswer = int64(0)
 	for q := 0;int64(q)<Q;q++ {
 		if (xy[q][0] == 1) {
+			//fmt.Printf("s:%v y:%v last:%v n:%v\n", xy[q][1], xy[q][2], lastAnswer, N)
 			queryOne(xy[q][1], xy[q][2], seq, &lastAnswer, N)
 		} else {
 			queryTwo(xy[q][1], xy[q][2], seq, &lastAnswer, N)
@@ -104,14 +105,14 @@ func main() {
 }
 
 
-func queryOne(s int64, y int64,  seq [][]int64, lastAnswer *int64, N int64) {
-	var i = (s ^ *lastAnswer) % N
-	seq[s][i] = y
+func queryOne(x int64, y int64,  seq [][]int64, lastAnswer *int64, N int64) {
+	var i = (x ^ *lastAnswer) % N
+	seq[i] = append(seq[i], y)
 }
 
-func queryTwo(s int64, y int64,  seq [][]int64, lastAnswer *int64, N int64) {
-	var i = (s ^ *lastAnswer) % N
-	var j = i % int64(len(seq[i]))
+func queryTwo(x int64, y int64,  seq [][]int64, lastAnswer *int64, N int64) {
+	var i = (x ^ *lastAnswer) % N
+	var j = y % int64(len(seq[i]))
 	*lastAnswer = seq[i][j]
 	fmt.Println(*lastAnswer)
 }
