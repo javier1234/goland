@@ -4,6 +4,7 @@ import (
 	"os"
 	"log"
 	"fmt"
+	"sort"
 )
 
 var stdin *os.File
@@ -28,7 +29,7 @@ func main_read_from_file() uint64 {
 		tree = appendInterval(interval, tree)
 	}
 	//fmt.Println(tree.rightTree)
-	queryIntersection(Interval{uint64(5), uint64(5), uint64(200)}, tree)
+	tree.queryIntersection(Interval{uint64(1), uint64(3), uint64(200)})
 	//fmt.Printf("%v\n", max)
 	return max
 }
@@ -49,13 +50,38 @@ func (i Interval) isIntersec(x Interval) bool {
 type Tree struct {
 	leftTree, rightTree *Tree
 	//TODO deberia estar ordenado por inicio
-	intersectionTree []Interval
+	intersectionLeftSortedTree []Interval
 	center uint64
 }
+
+type IntervalsLeftSorter struct {
+	intervals []Interval
+	by func(i1, i2 *Interval) bool
+}
+// Len is part of sort.Interface.
+func (s *IntervalsLeftSorter) Len() int {
+	return len(s.intervals)
+}
+
+// Swap is part of sort.Interface.
+func (s *IntervalsLeftSorter) Swap(i, j int) {
+	s.intervals[i], s.intervals[j] = s.intervals[j], s.intervals[i]
+}
+
+// Less is part of sort.Interface. It is implemented by calling the "by" closure in the sorter.
+func (s *IntervalsLeftSorter) Less(i, j int) bool {
+	return s.by(&s.intervals[i], &s.intervals[j])
+}
+func byleft (i1, i2 *Interval) bool {
+	return i1.left < i2.left
+}
+
+
 func appendInterval(interval *Interval, t *Tree) *Tree {
 	//el intervalo contiene mi centro
 	if interval.isInternal(t.center) {
-		t.intersectionTree = append(t.intersectionTree, *interval)
+		t.intersectionLeftSortedTree = append(t.intersectionLeftSortedTree, *interval)
+		sort.Sort(&IntervalsLeftSorter{t.intersectionLeftSortedTree, byleft})
 	} else if (interval.left < t.center) {
 		//es menor va a la izq
 		if t.leftTree == nil {
@@ -73,10 +99,10 @@ func appendInterval(interval *Interval, t *Tree) *Tree {
 	return t
 }
 
-func queryIntersection(target Interval, t *Tree)  {
+func (t *Tree) queryIntersection(target Interval)  {
 	//fmt.Printf("comparation center t:%d target:%d target:%d\n", t.center,target.left, target.right)
 	if target.isInternal(t.center) {
-		for _,ci := range t.intersectionTree {
+		for _,ci := range t.intersectionLeftSortedTree {
 			//fmt.Printf("comparation ci:%d target:%d \n", ci.left,target.left)
 			if (ci.isIntersec(target))	{
 				fmt.Printf("intersection left:%d right:%d value:%d\n", ci.left,ci.right,ci.value)
@@ -85,10 +111,10 @@ func queryIntersection(target Interval, t *Tree)  {
 	}
 
 	if target.left <= t.center && t.leftTree != nil{
-		queryIntersection(target, t.leftTree)
+		t.leftTree.queryIntersection(target)
 	}
 
 	if target.right >= t.center && t.rightTree != nil{
-		queryIntersection(target, t.rightTree)
+		t.rightTree.queryIntersection(target)
 	}
 }
