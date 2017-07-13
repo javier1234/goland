@@ -19,49 +19,6 @@ func setStdinFromFile(path string) {
 	stdin = file
 }
 
-
-
-/**
-Russian
-
-You are given a list of size , initialized with zeroes. You have to perform  operations on the list and output the maximum of final values of all the  elements in the list. For every operation, you are given three integers ,  and  and you have to add value  to all the elements ranging from index  to (both inclusive).
-
-Input Format
-
-First line will contain two integers  and  separated by a single space.
-Next  lines will contain three integers ,  and  separated by a single space.
-Numbers in list are numbered from  to .
-
-Constraints
-
-
-
-
-
-
-Output Format
-
-A single line containing maximum value in the updated list.
-
-Sample Input
-
-5 3
-1 2 100
-2 5 100
-3 4 100
-Sample Output
-
-200
-Explanation
-
-After first update list will be 100 100 0 0 0.
-After second update list will be 100 200 100 100 100.
-After third update list will be 100 200 200 200 100.
-So the required answer will be 200.
-
-NO PERFORMA, NO FUNCIONA CON ENTRADAS GRANDER
-
- */
 func main_old(){
 	var N,M uint64
 	fmt.Fscanf(stdin, "%v %v\n",&N,&M)
@@ -86,8 +43,34 @@ func main_old(){
 	fmt.Println(max)
 }
 
-
 func main_local() uint64 {
+	var N,M uint64
+	var intervals *Tree
+	fmt.Fscanf(stdin, "%v %v\n",&N,&M)
+	var l,r,v, max uint64
+	for i:=uint64(0);i<M;i++ {
+		fmt.Fscanf(stdin, "%v %v %v\n",&l,&r,&v)
+		intervals = appendInterval(l, r, v, intervals)
+	}
+	fmt.Printf("%v\n", max)
+	return max
+}
+
+
+func appendInterval(t *Tree , l uint64, r uint64, value uint64 ) *Tree {
+	if (t == nil) {
+		return &Tree{l, r, value, nil, nil}
+	}
+	//evaluamos a que rama va
+	if (l > t.left) {
+		t.rightLeaf = append(t.rightLeaf, l, r, value)
+	} else {
+		t.leftLeaf = append(t.leftLeaf, l, r, value)
+	}
+	return t
+}
+
+func main_arbolbinario() uint64 {
 	var N,M uint64
 	fmt.Fscanf(stdin, "%v %v\n",&N,&M)
 	var treeIntervalLeft *Tree
@@ -125,10 +108,10 @@ func main_local() uint64 {
 
 
 type Tree struct {
-	key uint64
-	keySecondary uint64
-	value uint64
-	leftLeaf *Tree
+	left      uint64
+	right     uint64
+	value     uint64
+	leftLeaf  *Tree
 	rightLeaf *Tree
 }
 
@@ -139,7 +122,7 @@ func append(t *Tree , key uint64, key2 uint64, value uint64 ) *Tree {
 		return &Tree{key, key2, value, nil, nil}
 	}
 	//evaluamos a que rama va
-	if (key > t.key) {
+	if (key > t.left) {
 		t.rightLeaf = append(t.rightLeaf, key, key2, value)
 	} else {
 		t.leftLeaf = append(t.leftLeaf, key,key2, value)
@@ -152,8 +135,8 @@ func calculateMaxLeftSize(leftTree *Tree, interval uint64) (max uint64) {
 		return uint64(0)
 	}
 	max = calculateMaxLeftSize(leftTree.leftLeaf, interval)
-	if (leftTree.key<=interval) {
-		if  (leftTree.keySecondary >= interval) {
+	if (leftTree.left <=interval) {
+		if  (leftTree.right >= interval) {
 			max += leftTree.value
 		}
 		max += calculateMaxLeftSize(leftTree.rightLeaf, interval)
@@ -166,8 +149,8 @@ func calculateMaxRightSize(tree *Tree, interval uint64) (max uint64) {
 		return uint64(0)
 	}
 	max = calculateMaxRightSize(tree.rightLeaf, interval)
-	if (tree.key>=interval) {
-		if (tree.keySecondary <= interval) {
+	if (tree.left >=interval) {
+		if (tree.right <= interval) {
 			max += tree.value
 		}
 		max += calculateMaxRightSize(tree.leftLeaf, interval)
@@ -180,7 +163,7 @@ func printPreOrderTree(t *Tree) {
 		return
 	}
 	printPreOrderTree(t.leftLeaf)
-	fmt.Printf("key:%v value:%v\n ", t.key, t.value)
+	fmt.Printf("key:%v value:%v\n ", t.left, t.value)
 	printPreOrderTree(t.rightLeaf)
 }
 
