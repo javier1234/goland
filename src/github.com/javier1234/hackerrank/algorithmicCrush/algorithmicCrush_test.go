@@ -9,7 +9,7 @@ func Test_mainOld_set2(t *testing.T) {
 	setStdinFromFile("test2_imput.txt")
 	result := main_local()
 	if (result != uint64(200)){
-		t.Errorf("el resultado esperado era:%v pero dio:%v", 1500, result)
+		t.Errorf("el resultado esperado era:%v pero dio:%v", 200, result)
 	}
 }
 

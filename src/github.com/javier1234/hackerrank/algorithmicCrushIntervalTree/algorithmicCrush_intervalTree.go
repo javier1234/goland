@@ -18,19 +18,32 @@ func setStdinFromFile(path string) {
 	stdin = file
 }
 
-func main_read_from_file() uint64 {
+func main_read_from_file() (max uint64) {
 	var N,M uint64
 	fmt.Fscanf(stdin, "%v %v\n",&N,&M)
-	var l,r,v, max uint64
+	var l,r,v uint64
 	var tree = &Tree{nil, nil, nil, N/2}
+	var intervals = make([]Interval, M)
 	for i:=uint64(0);i<M;i++ {
 		fmt.Fscanf(stdin, "%v %v %v\n",&l,&r,&v)
 		var interval = &Interval{l, r, v}
+		intervals[i] = *interval
 		tree = appendInterval(interval, tree)
 	}
-	//fmt.Println(tree.rightTree)
-	tree.queryIntersection(Interval{uint64(1), uint64(3), uint64(200)})
-	//fmt.Printf("%v\n", max)
+
+	for _,interval := range intervals {
+		maxLeftAux, maxRightAux := tree.queryMaxByValue(interval)
+		//fmt.Printf("max for interval %d/%d is %d\n", interval.left, interval.right, maxAux)
+		if (maxLeftAux > max) {
+			max = maxLeftAux
+		}
+		if (maxRightAux > max) {
+			max = maxRightAux
+		}
+	}
+
+
+	fmt.Printf("%v \n", max)
 	return max
 }
 
@@ -100,12 +113,15 @@ func appendInterval(interval *Interval, t *Tree) *Tree {
 }
 
 func (t *Tree) queryIntersection(target Interval)  {
-	//fmt.Printf("comparation center t:%d target:%d target:%d\n", t.center,target.left, target.right)
+	fmt.Printf("comparation center t:%d target:%d target:%d\n", t.center,target.left, target.right)
 	if target.isInternal(t.center) {
 		for _,ci := range t.intersectionLeftSortedTree {
-			//fmt.Printf("comparation ci:%d target:%d \n", ci.left,target.left)
+			fmt.Printf("comparation ci:%d target:%d \n", ci.left,target.left)
 			if (ci.isIntersec(target))	{
 				fmt.Printf("intersection left:%d right:%d value:%d\n", ci.left,ci.right,ci.value)
+			} else if (target.right > ci.left) {
+				fmt.Printf("salgo por la lista ordenada:t.right=%d ci.lefr=%d", target.right, ci.left)
+				break;
 			}
 		}
 	}
@@ -117,4 +133,40 @@ func (t *Tree) queryIntersection(target Interval)  {
 	if target.right >= t.center && t.rightTree != nil{
 		t.rightTree.queryIntersection(target)
 	}
+}
+
+
+func (t *Tree) queryMaxByValue(target Interval) (maxLeft, maxRight uint64)  {
+	//fmt.Printf("comparation center t:%d target:%d target:%d\n", t.center,target.left, target.right)
+	if target.isInternal(t.center) {
+		for _,ci := range t.intersectionLeftSortedTree {
+			//fmt.Printf("comparation ci:%d target:%d \n", ci.left,target.left)
+			if (ci.isIntersec(target))	{
+				//fmt.Printf("intersection left:%d right:%d value:%d\n", ci.left,ci.right,ci.value)
+				if (ci.isInternal(target.left)) {
+					maxLeft += target.value
+				}
+				if (ci.isInternal(target.right)) {
+					maxRight += target.value
+				}
+			} else if (target.right > ci.left) {
+				//fmt.Printf("salgo por la lista ordenada:t.right=%d ci.lefr=%d", target.right, ci.left)
+				break;
+			}
+		}
+	}
+
+	var maxLeftAux,maxRightAux uint64
+	if target.left <= t.center && t.leftTree != nil{
+		maxLeftAux,maxRightAux = t.leftTree.queryMaxByValue(target)
+		maxLeft += maxLeftAux
+		maxRight += maxRightAux
+	}
+
+	if target.right >= t.center && t.rightTree != nil{
+		maxLeftAux,maxRightAux = t.rightTree.queryMaxByValue(target)
+		maxLeft += maxLeftAux
+		maxRight += maxRightAux
+	}
+	return maxLeft,maxRight
 }
