@@ -22,7 +22,7 @@ func main_read_from_file() (max uint64) {
 	var N,M uint64
 	fmt.Fscanf(stdin, "%v %v\n",&N,&M)
 	var l,r,v uint64
-	var tree = &Tree{nil, nil, nil, N/2}
+	var tree = &Tree{center:N/2}
 	var intervals = make([]Interval, M)
 	for i:=uint64(0);i<M;i++ {
 		fmt.Fscanf(stdin, "%v %v %v\n",&l,&r,&v)
@@ -30,6 +30,8 @@ func main_read_from_file() (max uint64) {
 		intervals[i] = *interval
 		tree = appendInterval(interval, tree)
 	}
+	//tree.printCompleteTree()
+
 
 	for _,interval := range intervals {
 		maxLeftAux, maxRightAux := tree.queryMaxByValue(interval)
@@ -41,12 +43,35 @@ func main_read_from_file() (max uint64) {
 			max = maxRightAux
 		}
 	}
-
-
 	fmt.Printf("%v \n", max)
 	return max
 }
 
+
+func main() {
+	var N,M uint64
+	fmt.Scanf("%v %v\n",&N,&M)
+	var l,r,v uint64
+	var tree = &Tree{center: N/2}
+	var intervals = make([]Interval, M)
+	for i:=uint64(0);i<M;i++ {
+		fmt.Scanf("%v %v %v\n",&l,&r,&v)
+		var interval = &Interval{l, r, v}
+		intervals[i] = *interval
+		tree = appendInterval(interval, tree)
+	}
+	var max uint64
+	for _,interval := range intervals {
+		maxLeftAux, maxRightAux := tree.queryMaxByValue(interval)
+		if (maxLeftAux > max) {
+			max = maxLeftAux
+		}
+		if (maxRightAux > max) {
+			max = maxRightAux
+		}
+	}
+	fmt.Printf("%v\n", max)
+}
 
 type Interval struct {
 	left uint64
@@ -62,7 +87,6 @@ func (i Interval) isIntersec(x Interval) bool {
 
 type Tree struct {
 	leftTree, rightTree *Tree
-	//TODO deberia estar ordenado por inicio
 	intersectionLeftSortedTree []Interval
 	center uint64
 }
@@ -95,17 +119,15 @@ func appendInterval(interval *Interval, t *Tree) *Tree {
 	if interval.isInternal(t.center) {
 		t.intersectionLeftSortedTree = append(t.intersectionLeftSortedTree, *interval)
 		sort.Sort(&IntervalsLeftSorter{t.intersectionLeftSortedTree, byleft})
-	} else if (interval.left < t.center) {
+	} else if (interval.left <= t.center) {
 		//es menor va a la izq
 		if t.leftTree == nil {
-			//TODO crear el slice con el tamaño maximo
-			t.leftTree = &Tree{nil, nil, nil, interval.left}
+			t.leftTree = &Tree{center: interval.left}
 		}
 		t.leftTree = appendInterval(interval, t.leftTree)
 	} else {
 		if t.rightTree == nil {
-			//TODO crear el slice con el tamaño maximo
-			t.rightTree = &Tree{nil, nil, nil, interval.right}
+			t.rightTree = &Tree{center: interval.right}
 		}
 		t.rightTree = appendInterval(interval, t.rightTree)
 	}
@@ -126,11 +148,11 @@ func (t *Tree) queryIntersection(target Interval)  {
 		}
 	}
 
-	if target.left <= t.center && t.leftTree != nil{
+	if target.left < t.center && t.leftTree != nil{
 		t.leftTree.queryIntersection(target)
 	}
 
-	if target.right >= t.center && t.rightTree != nil{
+	if target.right > t.center && t.rightTree != nil{
 		t.rightTree.queryIntersection(target)
 	}
 }
@@ -138,35 +160,54 @@ func (t *Tree) queryIntersection(target Interval)  {
 
 func (t *Tree) queryMaxByValue(target Interval) (maxLeft, maxRight uint64)  {
 	//fmt.Printf("comparation center t:%d target:%d target:%d\n", t.center,target.left, target.right)
-	if target.isInternal(t.center) {
-		for _,ci := range t.intersectionLeftSortedTree {
-			//fmt.Printf("comparation ci:%d target:%d \n", ci.left,target.left)
-			if (ci.isIntersec(target))	{
-				//fmt.Printf("intersection left:%d right:%d value:%d\n", ci.left,ci.right,ci.value)
-				if (ci.isInternal(target.left)) {
-					maxLeft += target.value
-				}
-				if (ci.isInternal(target.right)) {
-					maxRight += target.value
-				}
-			} else if (target.right > ci.left) {
-				//fmt.Printf("salgo por la lista ordenada:t.right=%d ci.lefr=%d", target.right, ci.left)
-				break;
+	for _,ci := range t.intersectionLeftSortedTree {
+		//fmt.Printf("comparation ci:%d target:%d \n", ci.left,target.left)
+		if (ci.isIntersec(target))	{
+			//fmt.Printf("intersection left:%d right:%d value:%d\n", ci.left,ci.right,ci.value)
+			if (ci.isInternal(target.left)) {
+				//fmt.Printf("left %d+%d\n", maxLeft, target.value)
+				maxLeft += ci.value
 			}
+			if (ci.isInternal(target.right)) {
+				//fmt.Printf("right %d+%d\n", maxRight, target.value)
+				maxRight += ci.value
+			}
+		} else if (target.right < ci.left) {
+			//fmt.Printf("salgo por la lista ordenada:t.right=%d ci.lefr=%d", target.right, ci.left)
+			break;
 		}
 	}
 
 	var maxLeftAux,maxRightAux uint64
 	if target.left <= t.center && t.leftTree != nil{
+		//fmt.Printf("izquierda \n")
 		maxLeftAux,maxRightAux = t.leftTree.queryMaxByValue(target)
 		maxLeft += maxLeftAux
 		maxRight += maxRightAux
 	}
 
 	if target.right >= t.center && t.rightTree != nil{
+		//fmt.Printf("dere \n")
 		maxLeftAux,maxRightAux = t.rightTree.queryMaxByValue(target)
 		maxLeft += maxLeftAux
 		maxRight += maxRightAux
 	}
 	return maxLeft,maxRight
+}
+
+func (t *Tree) printCompleteTree()  {
+	fmt.Printf("Center:%d \n", t.center)
+	for _,ci := range t.intersectionLeftSortedTree {
+		fmt.Printf("    %d-%d-%d\n", ci.left,ci.right,ci.value)
+	}
+
+	if t.leftTree != nil{
+		fmt.Println("inz")
+		t.leftTree.printCompleteTree()
+	}
+
+	if t.rightTree != nil{
+		fmt.Println("der")
+		t.rightTree.printCompleteTree()
+	}
 }
